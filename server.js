@@ -107,7 +107,7 @@ app.post("/api/links", (req, res) => {
   const newLink = {
     code,
     target,
-    title: title || "Klik untuk lihat penawaran ini",
+    title: title || "",
     description: description || "",
     image: image || "",
     clicks: 0,
