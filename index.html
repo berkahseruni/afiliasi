@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kelola Link Afiliasi</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #171a21;
+    --border: #262a33;
+    --text: #e8eaed;
+    --muted: #8a8f98;
+    --accent: #4f8cff;
+    --accent2: #22c55e;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  p.sub { color: var(--muted); margin-top: 0; margin-bottom: 24px; font-size: 14px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+  input, textarea {
+    width: 100%;
+    background: #0f1115;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 14px;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  button {
+    margin-top: 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { opacity: 0.9; }
+  .error { color: var(--danger); font-size: 13px; margin-top: 8px; }
+  .link-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 12px;
+  }
+  .link-item img {
+    width: 64px; height: 64px; object-fit: cover; border-radius: 8px; background: #0f1115; flex-shrink: 0;
+  }
+  .link-item .body { flex: 1; min-width: 0; }
+  .link-item .title { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+  .link-item .short { color: var(--accent); font-size: 13px; word-break: break-all; }
+  .link-item .target { color: var(--muted); font-size: 12px; word-break: break-all; margin-top: 2px; }
+  .link-item .meta { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .link-item .actions { display: flex; gap: 8px; margin-top: 8px; }
+  .link-item .actions button { margin-top: 0; padding: 6px 10px; font-size: 12px; }
+  .btn-copy { background: var(--accent2); }
+  .btn-del { background: var(--danger); }
+  .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 20px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔗 Kelola Link Afiliasi</h1>
+  <p class="sub">Buat link pendek dengan preview foto khusus untuk dibagikan di Facebook.</p>
+
+  <div class="card">
+    <strong>Buat Link Baru</strong>
+    <label>URL Afiliasi Tujuan *</label>
+    <input id="target" placeholder="https://tokopedia.link/xxxxx" />
+
+    <label>Judul Preview</label>
+    <input id="title" placeholder="Diskon 50% Sepatu Lari Terbaru!" />
+
+    <label>Deskripsi Preview</label>
+    <textarea id="description" placeholder="Cek promo spesial hari ini, stok terbatas!"></textarea>
+
+    <label>URL Foto Preview</label>
+    <input id="image" placeholder="https://contoh.com/foto-produk.jpg" />
+
+    <label>Kode Custom (opsional)</label>
+    <input id="customCode" placeholder="promo-sepatu (kosongkan untuk otomatis)" />
+
+    <button onclick="createLink()">Buat Link Pendek</button>
+    <div class="error" id="error"></div>
+  </div>
+
+  <div class="card">
+    <strong>Daftar Link</strong>
+    <div id="list" style="margin-top: 14px;"></div>
+  </div>
+</div>
+
+<script>
+async function loadLinks() {
+  const res = await fetch('/api/links');
+  const links = await res.json();
+  const list = document.getElementById('list');
+
+  if (links.length === 0) {
+    list.innerHTML = '<div class="empty">Belum ada link. Buat yang pertama di atas!</div>';
+    return;
+  }
+
+  list.innerHTML = links.map(l => `
+    <div class="link-item">
+      ${l.image ? `<img src="${escapeHtml(l.image)}" onerror="this.style.display='none'" />` : ''}
+      <div class="body">
+        <div class="title">${escapeHtml(l.title)}</div>
+        <div class="short">${escapeHtml(l.shortUrl)}</div>
+        <div class="target">→ ${escapeHtml(l.target)}</div>
+        <div class="meta">${l.clicks} klik · dibuat ${new Date(l.createdAt).toLocaleDateString('id-ID')}</div>
+        <div class="actions">
+          <button class="btn-copy" onclick="copyLink('${l.shortUrl}')">Salin</button>
+          <button class="btn-del" onclick="deleteLink('${l.code}')">Hapus</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+async function createLink() {
+  const errorEl = document.getElementById('error');
+  errorEl.textContent = '';
+
+  const payload = {
+    target: document.getElementById('target').value.trim(),
+    title: document.getElementById('title').value.trim(),
+    description: document.getElementById('description').value.trim(),
+    image: document.getElementById('image').value.trim(),
+    customCode: document.getElementById('customCode').value.trim(),
+  };
+
+  const res = await fetch('/api/links', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    errorEl.textContent = data.error || 'Terjadi kesalahan';
+    return;
+  }
+
+  document.getElementById('target').value = '';
+  document.getElementById('title').value = '';
+  document.getElementById('description').value = '';
+  document.getElementById('image').value = '';
+  document.getElementById('customCode').value = '';
+
+  loadLinks();
+}
+
+async function deleteLink(code) {
+  if (!confirm('Hapus link ini?')) return;
+  await fetch('/api/links/' + code, { method: 'DELETE' });
+  loadLinks();
+}
+
+function copyLink(url) {
+  navigator.clipboard.writeText(url);
+  alert('Link disalin: ' + url);
+}
+
+loadLinks();
+</script>
+</body>
+</html>
