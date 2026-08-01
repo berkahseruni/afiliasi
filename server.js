@@ -118,7 +118,6 @@ app.get("/:code", (req, res, next) => {
   <meta name="twitter:title" content="${escapeHtml(link.title)}" />
   <meta name="twitter:description" content="${escapeHtml(link.description)}" />
   <meta name="twitter:image" content="${escapeHtml(link.image)}" />
-  <meta http-equiv="refresh" content="0; url=${escapeHtml(link.target)}" />
   <script>window.location.replace(${JSON.stringify(link.target)});</script>
 </head>
 <body>
