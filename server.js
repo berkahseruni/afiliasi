@@ -112,7 +112,7 @@ app.get("/:code", (req, res, next) => {
   <meta property="og:title" content="${escapeHtml(link.title)}" />
   <meta property="og:description" content="${escapeHtml(link.description)}" />
   <meta property="og:image" content="${escapeHtml(link.image)}" />
-  <meta property="og:url" content="${escapeHtml(shortUrl)}" />
+  <meta property="og:url" content="${escapeHtml(link.target)}" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${escapeHtml(link.title)}" />
