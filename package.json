@@ -1,0 +1,15 @@
+{
+  "name": "affiliate-link-shortener",
+  "version": "1.0.0",
+  "description": "Link shortener dengan preview Facebook (Open Graph) untuk link afiliasi",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "nanoid": "^3.3.7"
+  }
+}
